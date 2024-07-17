@@ -221,7 +221,7 @@ class Whisper:
             Transcribed text.
         """
         return self.transcribe(
-            api.load_wav_file(filename).mono, num_proc=num_proc, strict=strict
+            api.load_wav_file_mono(filename), num_proc=num_proc, strict=strict
         )
 
     def stream_transcribe(
