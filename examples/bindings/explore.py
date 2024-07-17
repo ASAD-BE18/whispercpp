@@ -34,7 +34,7 @@ def main(argv: list[str]) -> int:
     assert Path(path).exists()
     params = get_model().params.with_print_realtime(True).build()
     assert _model is not None
-    _model.context.full(params, w.api.load_wav_file(Path(path).__fspath__()).mono)
+    _model.context.full(params, w.api.load_wav_file_mono(Path(path).__fspath__()))
     return 0
 
 

@@ -9,6 +9,24 @@ WavFileWrapper WavFileWrapper::load_wav_file(const char *filename) {
     return WavFileWrapper(&pcmf32, &pcmf32s);
 }
 
+std::vector<std::vector<float>> load_wav_file_stereo(const char *filename) {
+    std::vector<float> pcmf32;
+    std::vector<std::vector<float>> pcmf32s;
+    if (!::read_wav(filename, pcmf32, pcmf32s, true)) {
+        throw std::runtime_error("Failed to load wav file");
+    }
+    return pcmf32s;
+}
+
+std::vector<float> load_wav_file_mono(const char *filename) {
+    std::vector<float> pcmf32;
+    std::vector<std::vector<float>> pcmf32s;
+    if (!::read_wav(filename, pcmf32, pcmf32s, false)) {
+        throw std::runtime_error("Failed to load wav file");
+    }
+    return pcmf32;
+}
+
 namespace py = pybind11;
 using namespace pybind11::literals;
 
@@ -57,6 +75,12 @@ PYBIND11_MODULE(api_cpp2py_export, m) {
         .value("SAMPLING_BEAM_SEARCH",
                whisper_sampling_strategy::WHISPER_SAMPLING_BEAM_SEARCH)
         .export_values();
+
+    m.def("load_wav_file_stereo", load_wav_file_stereo, "filename"_a,
+          py::return_value_policy::reference);
+
+    m.def("load_wav_file_mono", load_wav_file_mono, "filename"_a,
+          py::return_value_policy::reference);
 
     m.def("load_wav_file", &WavFileWrapper::load_wav_file, "filename"_a,
           py::return_value_policy::reference);

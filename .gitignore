@@ -136,3 +136,4 @@ bun.lockb
 *.bin
 
 src/whispercpp/__about__.py
+.vscode/settings.json

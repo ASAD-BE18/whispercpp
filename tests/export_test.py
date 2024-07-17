@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest as p
 
 import whispercpp as w
-from pydub import AudioSegment as am
+import wave
 
 if t.TYPE_CHECKING:
     import numpy as np
@@ -21,10 +21,14 @@ _EXPECTED = " And so my fellow Americans ask not what your country can do for yo
 
 def preprocess(file: Path, sample_rate: int = 16000) -> NDArray[np.float32]:
 
-    sound = am.from_file(file, format='wav', frame_rate=sample_rate)
-    sound = sound.set_frame_rate(sample_rate).get_array_of_samples()
+    sound = wave.open(str(file), "rb")
+    nchannels = sound.getnchannels()
+    N = sound.getnframes()
+    dstr = sound.readframes(N*nchannels)
+    data = np.fromstring(dstr, np.int16)
+    data = data.reshape(-1, nchannels)
 
-    return np.frombuffer(sound, np.int16).flatten().astype(np.float32) / 32768.0
+    return data.flatten().astype(np.float32) / 32768.0
 
 def test_invalid_models():
     with p.raises(RuntimeError):
@@ -73,7 +77,7 @@ def test_from_params_file(models: str):
 def test_load_wav_file():
     np.testing.assert_almost_equal(
         preprocess(JFK_WAV),
-        w.api.load_wav_file(str(JFK_WAV.resolve())).mono,
+        w.api.load_wav_file_mono(str(JFK_WAV.resolve())),
     )
 
 def transcribe_strict():
