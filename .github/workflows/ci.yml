@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-13]
+        os: [ubuntu-latest, macos-latest]
     name: Integration tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
@@ -35,7 +35,7 @@ jobs:
       - name: Setup CI
         uses: ./.github/actions/setup-repo
         with:
-          python-version: '3.9' # sync with default version in WORKSPACE.
+          python-version: '3.11.8' # sync with default version in WORKSPACE.
       - name: Install development dependencies and bindings
         run: |
           bazel run pypi_update
