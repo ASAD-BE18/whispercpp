@@ -7,7 +7,7 @@ on:
     branches:
       - develop
   schedule:
-    - cron: '00 12 * * 1' # Monday 12 PM UTC
+    - cron: '00 12 1 * *' # First day of each month 12 PM UTC
 concurrency:
   group: ci-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
