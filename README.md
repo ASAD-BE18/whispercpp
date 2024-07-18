@@ -18,6 +18,10 @@ git submodule update --init --recursive
 
 Then build the wheel:
 
+> [!IMPORTANT]
+> If installing on Raspberry Pi OS (Lite, might apply to other images as well), you need to install some additional packages with apt-get:
+> `sudo apt-get install libasound2-dev python3-dev python3-pip`
+
 ```bash
 # Option 1: using pypa/build
 python3 -m build -w
