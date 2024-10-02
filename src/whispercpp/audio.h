@@ -40,6 +40,9 @@ class AudioCapture {
         if (m_dev_id) {
             SDL_CloseAudioDevice(m_dev_id);
         }
+        if (m_playback_dev_id) {
+            SDL_CloseAudioDevice(m_playback_dev_id);
+        }
     }
 
     bool init_device(int capture_id, int sample_rate);
@@ -51,20 +54,28 @@ class AudioCapture {
     bool pause();
     bool clear();
 
-    // implement a SDL callback
+    // Implement a SDL callback
     void callback(uint8_t *stream, int len);
 
-    // retrieve audio data from the buffer
+    // Retrieve audio data from the buffer
     void get(int ms, std::vector<float> &audio);
 
     int stream_transcribe(Context *, Params *, const py::kwargs &);
+
+    bool set_playback(bool playback);
+    bool set_speaker_index(int speaker_index);
 
   private:
     // Default device
     SDL_AudioDeviceID m_dev_id = 0;
 
+    // Playback device
+    SDL_AudioDeviceID m_playback_dev_id = 0;
+
     int m_length_ms = 0;
     int m_sample_rate = 0;
+    int m_speaker_index = 0;
+    bool m_playback = false;
 
     std::atomic_bool m_running;
     std::mutex m_mutex;
