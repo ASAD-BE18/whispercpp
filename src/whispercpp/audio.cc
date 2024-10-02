@@ -43,9 +43,13 @@ bool AudioCapture::init_device(int capture_id, int sample_rate) {
 
     SDL_AudioSpec capture_spec_desired;
     SDL_AudioSpec capture_spec_obtained;
+    SDL_AudioSpec playback_spec_desired;
+    SDL_AudioSpec playback_spec_obtained;
 
     SDL_zero(capture_spec_desired);
     SDL_zero(capture_spec_obtained);
+    SDL_zero(playback_spec_desired);
+    SDL_zero(playback_spec_obtained);
 
     capture_spec_desired.freq = sample_rate;
     capture_spec_desired.format = AUDIO_F32;
@@ -94,6 +98,37 @@ bool AudioCapture::init_device(int capture_id, int sample_rate) {
 
     m_audio.resize((m_sample_rate * m_length_ms) / 1000);
 
+    if (m_playback) {
+        playback_spec_desired.freq = sample_rate;
+        playback_spec_desired.format = AUDIO_F32;
+        playback_spec_desired.channels = 1;
+        playback_spec_desired.samples = 1024;
+        playback_spec_desired.callback = nullptr;
+
+        m_playback_dev_id = SDL_OpenAudioDevice(
+            SDL_GetAudioDeviceName(m_speaker_index, SDL_FALSE), SDL_FALSE,
+            &playback_spec_desired, &playback_spec_obtained, 0);
+
+        if (!m_playback_dev_id) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                         "\n%s: Failed to open playback device: %s\n", __func__,
+                         SDL_GetError());
+            m_playback_dev_id = 0;
+            return false;
+        } else {
+            fprintf(stderr, "\nOpened playback device: (id=%d, name=%s)\n",
+                    m_playback_dev_id,
+                    SDL_GetAudioDeviceName(m_speaker_index, SDL_FALSE));
+            fprintf(stderr, "  - sample_rate: %d\n", playback_spec_obtained.freq);
+            fprintf(stderr, "  - format: %d (required: %d)\n",
+                    playback_spec_obtained.format, playback_spec_desired.format);
+            fprintf(stderr, "  - channels: %d (required: %d)\n",
+                    playback_spec_obtained.channels, playback_spec_desired.channels);
+            fprintf(stderr, "  - samples per frame: %d\n\n",
+                    playback_spec_obtained.samples);
+        }
+    }
+
     return true;
 };
 
@@ -109,6 +144,9 @@ bool AudioCapture::resume() {
     }
 
     SDL_PauseAudioDevice(m_dev_id, 0);
+    if (m_playback && m_playback_dev_id) {
+        SDL_PauseAudioDevice(m_playback_dev_id, 0);
+    }
     m_running = true;
     return true;
 };
@@ -125,6 +163,9 @@ bool AudioCapture::pause() {
     }
 
     SDL_PauseAudioDevice(m_dev_id, 1);
+    if (m_playback && m_playback_dev_id) {
+        SDL_PauseAudioDevice(m_playback_dev_id, 1);
+    }
     this->clear();
     m_running = false;
     return true;
@@ -184,6 +225,10 @@ void AudioCapture::callback(uint8_t *stream, int len) {
             m_audio_len = std::min(m_audio_len + num_samples, m_audio.size());
         }
     }
+
+    if (m_playback && m_playback_dev_id) {
+        SDL_QueueAudio(m_playback_dev_id, stream, len);
+    }
 };
 
 void AudioCapture::get(int ms, std::vector<float> &audio) {
@@ -232,6 +277,16 @@ void AudioCapture::get(int ms, std::vector<float> &audio) {
     }
 }
 
+bool AudioCapture::set_playback(bool playback) {
+    m_playback = playback;
+    return true;
+}
+
+bool AudioCapture::set_speaker_index(int speaker_index) {
+    m_speaker_index = speaker_index;
+    return true;
+}
+
 // excerpt from stream.cpp
 struct whisper_default_params {
     // clang-format off
@@ -273,9 +328,9 @@ std::string to_timestamp(int64_t t) {
         }                                                                      \
     } while (0)
 
-int AudioCapture::stream_transcribe(Context *ctx, Params *params,
-                                    const py::kwargs &kwargs) {
-    // very experiemental
+
+int AudioCapture::stream_transcribe(Context *ctx, Params *params, const py::kwargs &kwargs) {
+    // very experimental
     whisper_default_params wparams;
 
     // START: DEFAULT PARAMS
