@@ -252,6 +252,13 @@ class Whisper:
         if kwargs["step_ms"] < 500 and kwargs["step_ms"] != 0:
             raise ValueError("step_ms must be >= 500")
 
+        # Set playback and speaker index before initializing the device
+        if "playback" in kwargs:
+            self.ac.set_playback(kwargs["playback"])
+    
+        if "speaker_index" in kwargs:
+            self.ac.set_speaker_index(kwargs["speaker_index"])
+        
         self.ac = audio.AudioCapture(kwargs["length_ms"])
         if not self.ac.init_device(device_id, sample_rate):
             raise RuntimeError("Failed to initialize audio capture device.")
