@@ -648,5 +648,7 @@ void ExportAudioApi(py::module &m) {
              py::keep_alive<0, 1>())
         .def("resume", &whisper::AudioCapture::resume)
         .def("pause", &whisper::AudioCapture::pause)
-        .def("clear", &whisper::AudioCapture::clear);
+        .def("clear", &whisper::AudioCapture::clear)
+        .def("set_playback", &whisper::AudioCapture::set_playback)
+        .def("set_speaker_index", &whisper::AudioCapture::set_speaker_index);
 };
