@@ -83,7 +83,7 @@ bool AudioCapture::init_device(int capture_id, int sample_rate) {
         m_dev_id = 0;
         return false;
     } else {
-        fprintf(stderr, "\n Whispercpp build from Asad\n"); // DEBUG
+        // fprintf(stderr, "\n Whispercpp build from Asad\n"); // DEBUG
         fprintf(stderr, "\nOpened audio device: (id=%d, name=%s)\n", m_dev_id,
                 SDL_GetAudioDeviceName(capture_id, SDL_TRUE));
         fprintf(stderr, "  - sample_rate: %d\n", capture_spec_obtained.freq);
@@ -350,6 +350,16 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params, const py::kwar
     KWARGS_OR_DEFAULT(bool, no_timestamps);
     KWARGS_OR_DEFAULT(std::string, language);
     // END: DEFAULT PARAMS
+
+    // Check and set playback and speaker_index
+    if (kwargs.contains("playback")) {
+        bool playback = kwargs["playback"].cast<bool>();
+        this->set_playback(playback);
+    }
+    if (kwargs.contains("speaker_index")) {
+        int speaker_index = kwargs["speaker_index"].cast<int>();
+        this->set_speaker_index(speaker_index);
+    }
 
     wparams.keep_ms = std::min(wparams.keep_ms, wparams.step_ms);
     wparams.length_ms = std::max(wparams.length_ms, wparams.step_ms);
